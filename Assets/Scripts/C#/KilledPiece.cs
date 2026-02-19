@@ -4,10 +4,15 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class KilledPiece : MonoBehaviour
-{
-    public bool falling;
-    float speed = 16f;
-    float gravity = 32f;
+{    
+    [Header("Piece Sizes")]
+    [SerializeField]public float pieceDouble;
+    public bool falling;   
+
+    [Header("Piece Options")]
+    [SerializeField] float speed = 16f;
+    [SerializeField] float gravity = 32f;
+
     Vector2 moveDir;
     RectTransform rect;
     Image img;
@@ -33,7 +38,7 @@ public class KilledPiece : MonoBehaviour
         moveDir.y -= Time.deltaTime * gravity;
         moveDir.x = Mathf.Lerp(moveDir.x, 0, Time.deltaTime);
         rect.anchoredPosition += moveDir * Time.deltaTime * speed;
-        if (rect.position.x < -64f || rect.position.x > Screen.width + 64f || rect.position.y < -64f || rect.position.y > Screen.height + 64f)
+        if (rect.position.x < -pieceDouble || rect.position.x > Screen.width + pieceDouble || rect.position.y < -pieceDouble || rect.position.y > Screen.height + pieceDouble)
             falling = false;
     }
 }

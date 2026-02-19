@@ -88,3 +88,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca801c45d86d7ce4a9153d98c349df0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  value: 0
+  index:
+    x: 0
+    y: 0
+  pos: {x: 0, y: 0}
+  rect: {fileID: 0}
+  pieceBase: 34
+  pieceDouble: 68
+  pieceHalf: 17

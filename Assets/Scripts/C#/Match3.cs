@@ -10,10 +10,27 @@ public class Match3 : MonoBehaviour
     public Sprite[] pieces;
     public RectTransform gameBoard;
     public RectTransform killedBoard;
+    public string seedString;
 
     [Header("Prefabs")]
     [SerializeField]public GameObject nodePiece;
     [SerializeField]public GameObject killedPiece;
+    
+    [Header("Piece Amounts (100=5, 120=6, 140=7, etc)")]
+    [SerializeField]public int pieceLength;
+    
+    
+    [Header("Piece Sizes")]
+    [SerializeField]public int pieceBase;
+    [SerializeField]public int pieceDouble;
+    [SerializeField]public float pieceHalf;
+    
+    [Header("Match Scores")]
+    [SerializeField]public int scoreBase;
+    [SerializeField]public float scoreMultiSmall;
+    [SerializeField]public float scoreMultiMedium;
+    [SerializeField]public float scoreMultiBig;
+    [SerializeField]public int scoreCurrent;
 
     int width = 9;
     int height = 14;
@@ -28,14 +45,16 @@ public class Match3 : MonoBehaviour
 
     void Start()
     {
-        StartGame();
     }
 
-    void StartGame()
+    public void StartGame()
     {
         fills = new int[width];
-        string seed = getRandomSeed();
-        random = new System.Random(seed.GetHashCode());
+        int seedHashCode = GetOrCreateSeedHashCode();
+        // Initialize the random with the seed hash code
+        random = new System.Random(seedHashCode);
+        //string seed = getRandomSeed();
+        //random = new System.Random(seed.GetHashCode());
         update = new List<NodePiece>();
         flipped = new List<FlippedPieces>();
         dead = new List<NodePiece>();
@@ -44,6 +63,7 @@ public class Match3 : MonoBehaviour
         IntializeBoard();
         VerifyBoard();
         InstantiateBaord();
+
     }
 
     void IntializeBoard()
@@ -95,7 +115,7 @@ public class Match3 : MonoBehaviour
                 GameObject p = Instantiate(nodePiece, gameBoard);
                 NodePiece piece = p.GetComponent<NodePiece>();
                 RectTransform rect = p.GetComponent<RectTransform>();
-                rect.anchoredPosition = new Vector2(32 + (64 * x), -32 - (64 * y));
+                rect.anchoredPosition = new Vector2(pieceBase + (pieceDouble * x), -pieceBase - (pieceDouble * y));
                 piece.Intialize(val, new Point(x, y), pieces[val - 1]);
                 node.SetPiece(piece);
             }
@@ -159,7 +179,7 @@ public class Match3 : MonoBehaviour
             }
 
             if (same > 1) // If more than 1 of same piece in direction, then its a match
-                AddPoints(ref connected, line); //Add these points to ovveraching connected list
+                AddPoints(ref connected, line); //Add these points to overarching connected list
             
         }
 
@@ -235,7 +255,7 @@ public class Match3 : MonoBehaviour
     int fillPiece()
     {
         int val = 1;
-        val = (random.Next(0, 100) / (100 / pieces.Length)) + 1;
+        val = (random.Next(0, pieceLength) / (pieceLength / pieces.Length)) + 1;
         return val;
     }
 
@@ -292,9 +312,13 @@ public class Match3 : MonoBehaviour
             {
                 if (wasFlipped) // If we flipped
                     FlipPieces(piece.index, flippedPiece.index, false); // Flip back
+                    Debug.LogWarning("There was no match");
             }
             else  // If we made a match
             {
+                int matchCount = connected.Count;
+                Debug.LogWarning("There was a match of " + matchCount);
+                AddScore(matchCount);
                 foreach (Point pnt in connected)  // Remove the node pieces connected
                 {
                     KillPiece(pnt);
@@ -313,6 +337,35 @@ public class Match3 : MonoBehaviour
 
             flipped.Remove(flip); // Remove the Flip after update
             update.Remove(piece);
+        }
+    }
+
+    public void AddScore(int matchCount)
+    {
+        int scoreStart = matchCount * scoreBase;
+        if (matchCount == 3)
+        {
+            float scoreTemp = scoreCurrent + scoreStart;
+            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
+            scoreCurrent = scoreRounded;
+        }
+        else if (matchCount > 3 && matchCount < 6)
+        {
+            float scoreTemp = scoreCurrent + (scoreStart * scoreMultiSmall);
+            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
+            scoreCurrent = scoreRounded;
+        }
+        else if (matchCount >= 6 && matchCount < 9)
+        {
+            float scoreTemp = scoreCurrent + (scoreStart * scoreMultiMedium);
+            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
+            scoreCurrent = scoreRounded;
+        }
+        else if (matchCount >= 9)
+        {
+            float scoreTemp = scoreCurrent + (scoreStart * scoreMultiBig);
+            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
+            scoreCurrent = scoreRounded;
         }
     }
 
@@ -413,6 +466,12 @@ public class Match3 : MonoBehaviour
         if (set != null && val >= 0 && val < pieces.Length)
             set.Intialize(pieces[val], getPositionFromPoint(p));
     }
+    
+    // Method to replace the entire sprite array
+    public void SetSprites(Sprite[] newSprites)
+    {
+        pieces = newSprites;
+    }
 
     string getRandomSeed()
     {
@@ -424,6 +483,33 @@ public class Match3 : MonoBehaviour
 
     }
 
+    // Method to get or generate the seed hash code
+    private int GetOrCreateSeedHashCode()
+    {
+        if (string.IsNullOrEmpty(seedString))
+            {
+                string seed = getRandomSeed();
+                int seedHashCode = seed.GetHashCode();
+                seedString = seedHashCode.ToString();
+                return seedHashCode;
+            }
+        else
+            {
+        if (int.TryParse(seedString, out int existingHash))
+            {
+                return existingHash;
+            }
+        else
+            {
+                // If parsing fails, generate a new seed and update
+                string seed = getRandomSeed();
+                int seedHashCode = seed.GetHashCode();
+                seedString = seedHashCode.ToString();
+                return seedHashCode;
+            }
+        }
+    }
+
     Node getNodeAtPoint(Point p)
     {
         return board[p.x, p.y];
@@ -431,7 +517,7 @@ public class Match3 : MonoBehaviour
 
     public Vector2 getPositionFromPoint(Point p)
     {
-        return new Vector2(32 + (64 * p.x), -32 - (64 * p.y));
+        return new Vector2(pieceBase + (pieceDouble * p.x), -pieceBase - (pieceDouble * p.y));
     }
 }
 
