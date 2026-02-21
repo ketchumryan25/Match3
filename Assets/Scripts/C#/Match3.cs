@@ -6,6 +6,10 @@ public class Match3 : MonoBehaviour
 {
     public ArrayLayout boardLayout;
 
+    // Add these fields inside your Match3 class
+    [SerializeField] private GameObject highlightPrefab; // assign in inspector
+    private List<GameObject> activeHighlights = new List<GameObject>();
+
     [Header("UI Elements")]
     public Sprite[] pieces;
     public RectTransform gameBoard;
@@ -32,6 +36,7 @@ public class Match3 : MonoBehaviour
     [SerializeField]public float scoreMultiBig;
     [SerializeField]public int scoreCurrent;
 
+
     int width = 9;
     int height = 14;
     int[] fills;
@@ -40,6 +45,9 @@ public class Match3 : MonoBehaviour
     List<FlippedPieces> flipped;
     List<NodePiece> dead;
     List<KilledPiece> killed;
+
+    private List<(Point p1, Point p2)> currentPossibleMoves = new List<(Point, Point)>();
+    public int currentMoveCount = 0;
 
     System.Random random;
 
@@ -150,6 +158,7 @@ public class Match3 : MonoBehaviour
         else
             ResetPiece(pieceOne);
     }
+   
 
     List<Point> isConnected(Point p, bool main)
     {
@@ -508,6 +517,126 @@ public class Match3 : MonoBehaviour
                 return seedHashCode;
             }
         }
+    }
+
+    // Call this to clear previous highlights
+void ClearHighlights()
+{
+    foreach (var hl in activeHighlights)
+    {
+        Destroy(hl);
+    }
+    activeHighlights.Clear();
+}
+
+
+
+// Main method to find and highlight possible moves
+public List<(Point p1, Point p2)> GetPossibleMoves()
+{
+    List<(Point, Point)> moves = new List<(Point, Point)>();
+    for (int x = 0; x < width; x++)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            Point p = new Point(x, y);
+            if (x < width - 1 && IsSwapResultingMatch(p, new Point(x + 1, y)))
+            {
+                moves.Add((p, new Point(x + 1, y)));
+            }
+            if (y < height - 1 && IsSwapResultingMatch(p, new Point(x, y + 1)))
+            {
+                moves.Add((p, new Point(x, y + 1)));
+            }
+        }
+    }
+    return moves;
+}
+
+public void SpawnHighlights(List<(Point p1, Point p2)> moves)
+{
+    ClearHighlights();
+
+    foreach (var move in moves)
+    {
+        // Highlight first node
+        Vector2 pos1 = getPositionFromPoint(move.p1);
+        GameObject hl1 = Instantiate(highlightPrefab, gameBoard);
+        hl1.GetComponent<RectTransform>().anchoredPosition = pos1;
+        hl1.name = getNodeAtPoint(move.p1)?.GetPiece()?.gameObject.name ?? "Highlight_" + move.p1.x + "_" + move.p1.y;
+        activeHighlights.Add(hl1);
+
+        // Highlight second node
+        Vector2 pos2 = getPositionFromPoint(move.p2);
+        GameObject hl2 = Instantiate(highlightPrefab, gameBoard);
+        hl2.GetComponent<RectTransform>().anchoredPosition = pos2;
+        hl2.name = getNodeAtPoint(move.p2)?.GetPiece()?.gameObject.name ?? "Highlight_" + move.p2.x + "_" + move.p2.y;
+        activeHighlights.Add(hl2);
+    }
+}
+
+// Helper method to check if swapping two points results in a match
+public bool IsSwapResultingMatch(Point p1, Point p2)
+{
+    int val1 = getValueAtPoint(p1);
+    int val2 = getValueAtPoint(p2);
+
+    setValueAtPoint(p1, val2);
+    setValueAtPoint(p2, val1);
+
+    bool result = IsPartOfMatch(p1) || IsPartOfMatch(p2);
+
+    // Swap back
+    setValueAtPoint(p1, val1);
+    setValueAtPoint(p2, val2);
+
+    return result;
+}
+
+// Checks if a point is part of a match
+public bool IsPartOfMatch(Point p)
+{
+    int val = getValueAtPoint(p);
+    if (val <= 0) return false;
+
+    // Horizontal check
+    int countLeft = 0;
+    int countRight = 0;
+    for (int x = p.x - 1; x >= 0; x--)
+        if (getValueAtPoint(new Point(x, p.y)) == val) countLeft++;
+        else break;
+    for (int x = p.x + 1; x < width; x++)
+        if (getValueAtPoint(new Point(x, p.y)) == val) countRight++;
+        else break;
+    if (countLeft + countRight + 1 >= 3) return true;
+
+    // Vertical check
+    int countUp = 0;
+    int countDown = 0;
+    for (int y = p.y - 1; y >= 0; y--)
+        if (getValueAtPoint(new Point(p.x, y)) == val) countUp++;
+        else break;
+    for (int y = p.y + 1; y < height; y++)
+        if (getValueAtPoint(new Point(p.x, y)) == val) countDown++;
+        else break;
+    if (countUp + countDown + 1 >= 3) return true;
+
+    return false;
+}
+
+public void ShowHintsAndCount()
+{
+    ClearHighlights();
+    currentPossibleMoves = GetPossibleMoves();
+    SpawnHighlights(currentPossibleMoves);
+    currentMoveCount = currentPossibleMoves.Count;
+    Debug.Log("Total possible moves: " + currentMoveCount);
+}
+
+public void PossibleMoveCount()
+    {
+        currentPossibleMoves = GetPossibleMoves();
+        currentMoveCount = currentPossibleMoves.Count;
     }
 
     Node getNodeAtPoint(Point p)
