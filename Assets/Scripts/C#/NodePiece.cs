@@ -12,11 +12,15 @@ public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [HideInInspector]
     public Vector2 pos;
     [HideInInspector]
-    public RectTransform rect;
+    public RectTransform rect;  
+
+    [Header("Piece Sizes")]
+    [SerializeField]public int pieceBase;
+    [SerializeField]public int pieceDouble;
+    [SerializeField]public float pieceHalf;
 
     bool updating;
     Image img;
-
 
     public void Intialize(int v, Point p, Sprite piece)
     {
@@ -36,7 +40,7 @@ public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     }
     public void ResetPosition()
     {
-        pos = new Vector2(32 + (64 * index.x), -32 - (64 * index.y));
+        pos = new Vector2(pieceBase + (pieceDouble * index.x), -pieceBase - (pieceDouble * index.y));
     }
 
     void UpdateName()
@@ -62,12 +66,12 @@ public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     public void MovePosition(Vector2 move)
     {
-        rect.anchoredPosition += move * Time.deltaTime * 16f;
+        rect.anchoredPosition += move * Time.deltaTime * pieceHalf;
     }
     
     public void MovePositionTo(Vector2 move)
     {
-        rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, move, Time.deltaTime * 16f);
+        rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, move, Time.deltaTime * pieceHalf);
     }
 
     public void OnPointerDown(PointerEventData eventData)
