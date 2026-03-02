@@ -13,10 +13,12 @@ public class Match3 : MonoBehaviour
     public RectTransform killedBoard;
     public string seedString;
 
-    [Header("Prefabs")]
+    [Header("Game Objects")]
     [SerializeField]public GameObject nodePiece;
     [SerializeField]public GameObject killedPiece;
     [SerializeField] private GameObject highlightPrefab;
+    [SerializeField] private GameObject movePopPrefab;
+    [SerializeField] private GameObject audioHolder;
 
     [Header("Hint Stuff")]
     [SerializeField] public List<Color> highlightColors = new List<Color>();
@@ -37,6 +39,10 @@ public class Match3 : MonoBehaviour
     [SerializeField]public float scoreMultiMedium;
     [SerializeField]public float scoreMultiBig;
     [SerializeField]public int scoreCurrent;
+    [SerializeField]public bool matchBase;
+    [SerializeField]public bool matchMultiSmall;
+    [SerializeField]public bool matchMultiMedium;
+    [SerializeField]public bool matchMultiBig;
 
 
     int width = 9;
@@ -330,6 +336,7 @@ public class Match3 : MonoBehaviour
                 {
                     int matchCount = connected.Count;
                     Debug.LogWarning("There was a match of " + matchCount);
+                    MatchPop(matchCount);
                     ClearHighlights();
                     AddScore(matchCount);
                     foreach (Point pnt in connected)
@@ -351,6 +358,35 @@ public class Match3 : MonoBehaviour
                 flipped.Remove(flip);
                 update.Remove(piece);
             }
+        }
+    }
+
+    public void MatchPop(int matchCount)
+    {
+        Transform trans = audioHolder.transform;
+        if (matchCount == 3)
+        {
+            GameObject popBase = Instantiate(movePopPrefab);
+            popBase.name = "Base";
+            popBase.transform.SetParent(trans);
+        }
+        else if (matchCount > 3 && matchCount < 6)
+        {
+            GameObject popSmall = Instantiate(movePopPrefab);
+            popSmall.name = "Small";
+            popSmall.transform.SetParent(trans);
+        }
+        else if (matchCount >= 6 && matchCount < 9)
+        {
+            GameObject popMedium = Instantiate(movePopPrefab);
+            popMedium.name = "Medium";
+            popMedium.transform.SetParent(trans);
+        }
+        else if (matchCount >= 9)
+        {
+            GameObject popBig = Instantiate(movePopPrefab);
+            popBig.name = "Big";
+            popBig.transform.SetParent(trans);
         }
     }
 
