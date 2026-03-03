@@ -6,12 +6,42 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Core.unity
+    guid: a5243a101f2be2b48b9315f4fe2037a2
+  - enabled: 1
     path: Assets/Scenes/Menu_Main.unity
     guid: d46463379fe33674085e954b78487e34
   - enabled: 1
-    path: Assets/Scenes/TestLevel.unity
-    guid: e90025594d6737b439df1f831f607b9f
+    path: Assets/Scenes/Menu_BoardSelect.unity
+    guid: ba0bfeb22b6f9bb43bc66ec1a5af30df
   - enabled: 1
-    path: Assets/Scenes/Level_CCS.unity
+    path: Assets/Scenes/Menu_LevelSelect.unity
+    guid: b0a667f7eb693d7438ae4e7fb96867eb
+  - enabled: 1
+    path: Assets/Scenes/Level_CCS_HARD.unity
     guid: 5640ec76c42436d4a83e5e3013d625d2
+  - enabled: 1
+    path: Assets/Scenes/Level_CCS_EASY.unity
+    guid: 38bdb2c811d907442a01f02ffa64dd41
+  - enabled: 1
+    path: Assets/Scenes/Level_CCS_MED.unity
+    guid: 1340f802c358b2948875ef216b9f0de5
+  - enabled: 1
+    path: Assets/Scenes/Level_DMND_EASY.unity
+    guid: 687f70811fb9584448a0607ba922d82f
+  - enabled: 1
+    path: Assets/Scenes/Level_DMND_HARD.unity
+    guid: 9542413a8735fd74f9f46caf3e6c95f2
+  - enabled: 1
+    path: Assets/Scenes/Level_DMND_MED.unity
+    guid: 5a7a7115c8deadf4ea118f60e61de609
+  - enabled: 1
+    path: Assets/Scenes/Level_GRID_EASY.unity
+    guid: 561bba2fcf5b783459cd591afac367ed
+  - enabled: 1
+    path: Assets/Scenes/Level_GRID_HARD.unity
+    guid: 71147879697d78e40a8a643126216350
+  - enabled: 1
+    path: Assets/Scenes/Level_GRID_MED.unity
+    guid: 3d23c6b328779f048a0fafe5c85e7b6a
   m_configObjects: {}

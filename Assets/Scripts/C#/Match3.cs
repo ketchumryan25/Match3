@@ -1,14 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Match3 : MonoBehaviour
 {
     public ArrayLayout boardLayout;
-
-    // Add these fields inside your Match3 class
-    [SerializeField] private GameObject highlightPrefab; // assign in inspector
-    private List<GameObject> activeHighlights = new List<GameObject>();
 
     [Header("UI Elements")]
     public Sprite[] pieces;
@@ -16,9 +13,16 @@ public class Match3 : MonoBehaviour
     public RectTransform killedBoard;
     public string seedString;
 
-    [Header("Prefabs")]
+    [Header("Game Objects")]
     [SerializeField]public GameObject nodePiece;
     [SerializeField]public GameObject killedPiece;
+    [SerializeField] private GameObject highlightPrefab;
+    [SerializeField] private GameObject movePopPrefab;
+    [SerializeField] private GameObject audioHolder;
+
+    [Header("Hint Stuff")]
+    [SerializeField] public List<Color> highlightColors = new List<Color>();
+    private List<GameObject> activeHighlights = new List<GameObject>();
     
     [Header("Piece Amounts (100=5, 120=6, 140=7, etc)")]
     [SerializeField]public int pieceLength;
@@ -35,6 +39,10 @@ public class Match3 : MonoBehaviour
     [SerializeField]public float scoreMultiMedium;
     [SerializeField]public float scoreMultiBig;
     [SerializeField]public int scoreCurrent;
+    [SerializeField]public bool matchBase;
+    [SerializeField]public bool matchMultiSmall;
+    [SerializeField]public bool matchMultiMedium;
+    [SerializeField]public bool matchMultiBig;
 
 
     int width = 9;
@@ -48,6 +56,7 @@ public class Match3 : MonoBehaviour
 
     private List<(Point p1, Point p2)> currentPossibleMoves = new List<(Point, Point)>();
     public int currentMoveCount = 0;
+    private bool GameStarted = false;
 
     System.Random random;
 
@@ -59,10 +68,7 @@ public class Match3 : MonoBehaviour
     {
         fills = new int[width];
         int seedHashCode = GetOrCreateSeedHashCode();
-        // Initialize the random with the seed hash code
         random = new System.Random(seedHashCode);
-        //string seed = getRandomSeed();
-        //random = new System.Random(seed.GetHashCode());
         update = new List<NodePiece>();
         flipped = new List<FlippedPieces>();
         dead = new List<NodePiece>();
@@ -72,6 +78,7 @@ public class Match3 : MonoBehaviour
         VerifyBoard();
         InstantiateBaord();
 
+        GameStarted = true;
     }
 
     void IntializeBoard()
@@ -172,7 +179,7 @@ public class Match3 : MonoBehaviour
             Point.left
         };
 
-        foreach(Point dir in directions) // Checking if 2 or more pieces in directions
+        foreach(Point dir in directions)
         {
             List<Point> line = new List<Point>();
 
@@ -187,18 +194,18 @@ public class Match3 : MonoBehaviour
                 }
             }
 
-            if (same > 1) // If more than 1 of same piece in direction, then its a match
-                AddPoints(ref connected, line); //Add these points to overarching connected list
+            if (same > 1)
+                AddPoints(ref connected, line);
             
         }
 
-        for(int i = 0; i < 2; i++) // Checking if in middle of two same pieces
+        for(int i = 0; i < 2; i++)
         {
             List<Point> line = new List<Point>();
 
             int same = 0;
             Point[] check = { Point.add(p, directions[i]), Point.add(p, directions[i+2]) };
-            foreach (Point next in check) // Check both sides of piece, if same add them to list
+            foreach (Point next in check)
             {
                 if (getValueAtPoint(next) == val)
                     {
@@ -211,7 +218,7 @@ public class Match3 : MonoBehaviour
                 AddPoints(ref connected, line);
         }
 
-        for(int i = 0; i < 4; i++) // Check for 2x2
+        for(int i = 0; i < 4; i++)
         {
             List<Point> square = new List<Point>();
 
@@ -221,7 +228,7 @@ public class Match3 : MonoBehaviour
                 next -= 4;
 
             Point[] check = { Point.add(p, directions[i]), Point.add(p, directions[next]), Point.add(p, Point.add(directions[i], directions[next])) };
-            foreach (Point pnt in check) // Check all sides of piece, if same add them to list
+            foreach (Point pnt in check)
             {
                 if (getValueAtPoint(pnt) == val)
                     {
@@ -234,7 +241,7 @@ public class Match3 : MonoBehaviour
                 AddPoints(ref connected, square);
         }
 
-        if(main) // Checks for matches along current match
+        if(main)
         {
             for(int i = 0; i < connected.Count; i++)
                 AddPoints(ref connected, isConnected(connected[i], false));
@@ -293,59 +300,93 @@ public class Match3 : MonoBehaviour
 
     void Update()
     {
-        List<NodePiece> finishedUpdating = new List<NodePiece>();
-        for (int i = 0; i < update.Count; i++)
+        if (GameStarted)
         {
-            NodePiece piece = update[i];
-            if (!piece.UpdatePiece()) finishedUpdating.Add(piece); 
-        }
-        for (int i = 0; i < finishedUpdating.Count; i++)
-        {
-            NodePiece piece = finishedUpdating[i];
-            FlippedPieces flip = getFlipped(piece);
-            NodePiece flippedPiece = null;
-
-            int x = (int)piece.index.x;
-            fills[x] = Mathf.Clamp(fills[x] - 1, 0, width);
-
-            List<Point> connected = isConnected(piece.index, true);
-            bool wasFlipped = (flip != null);
-
-            if (wasFlipped) // If we flipped to make this update
+            List<NodePiece> finishedUpdating = new List<NodePiece>();
+            for (int i = 0; i < update.Count; i++)
             {
-                flippedPiece = flip.getOtherPiece(piece);
-                AddPoints(ref connected, isConnected(flippedPiece.index, true));
+                NodePiece piece = update[i];
+                if (!piece.UpdatePiece()) finishedUpdating.Add(piece); 
             }
+            for (int i = 0; i < finishedUpdating.Count; i++)
+            {
+                NodePiece piece = finishedUpdating[i];
+                FlippedPieces flip = getFlipped(piece);
+                NodePiece flippedPiece = null;
 
-            if (connected.Count == 0) // If we didnt make a match
-            {
-                if (wasFlipped) // If we flipped
-                    FlipPieces(piece.index, flippedPiece.index, false); // Flip back
-                    Debug.LogWarning("There was no match");
-            }
-            else  // If we made a match
-            {
-                int matchCount = connected.Count;
-                Debug.LogWarning("There was a match of " + matchCount);
-                AddScore(matchCount);
-                foreach (Point pnt in connected)  // Remove the node pieces connected
+                int x = (int)piece.index.x;
+                fills[x] = Mathf.Clamp(fills[x] - 1, 0, width);
+
+                List<Point> connected = isConnected(piece.index, true);
+                bool wasFlipped = (flip != null);
+
+                if (wasFlipped)
                 {
-                    KillPiece(pnt);
-                    Node node = getNodeAtPoint(pnt);
-                    NodePiece nodePiece = node.GetPiece();
-                    if (nodePiece != null)
-                    {
-                        nodePiece.gameObject.SetActive(false);
-                        dead.Add(nodePiece);
-                    }
-                    node.SetPiece(null);
+                    flippedPiece = flip.getOtherPiece(piece);
+                    AddPoints(ref connected, isConnected(flippedPiece.index, true));
                 }
 
-                ApplyGravityToBoard();
-            }
+                if (connected.Count == 0)
+                {
+                    if (wasFlipped)
+                        FlipPieces(piece.index, flippedPiece.index, false);
+                        Debug.LogWarning("There was no match");
+                }
+                else
+                {
+                    int matchCount = connected.Count;
+                    Debug.LogWarning("There was a match of " + matchCount);
+                    MatchPop(matchCount);
+                    ClearHighlights();
+                    AddScore(matchCount);
+                    foreach (Point pnt in connected)
+                    {
+                        KillPiece(pnt);
+                        Node node = getNodeAtPoint(pnt);
+                        NodePiece nodePiece = node.GetPiece();
+                        if (nodePiece != null)
+                        {
+                            nodePiece.gameObject.SetActive(false);
+                            dead.Add(nodePiece);
+                        }
+                        node.SetPiece(null);
+                    }
 
-            flipped.Remove(flip); // Remove the Flip after update
-            update.Remove(piece);
+                    ApplyGravityToBoard();
+                }
+
+                flipped.Remove(flip);
+                update.Remove(piece);
+            }
+        }
+    }
+
+    public void MatchPop(int matchCount)
+    {
+        Transform trans = audioHolder.transform;
+        if (matchCount == 3)
+        {
+            GameObject popBase = Instantiate(movePopPrefab);
+            popBase.name = "Base";
+            popBase.transform.SetParent(trans);
+        }
+        else if (matchCount > 3 && matchCount < 6)
+        {
+            GameObject popSmall = Instantiate(movePopPrefab);
+            popSmall.name = "Small";
+            popSmall.transform.SetParent(trans);
+        }
+        else if (matchCount >= 6 && matchCount < 9)
+        {
+            GameObject popMedium = Instantiate(movePopPrefab);
+            popMedium.name = "Medium";
+            popMedium.transform.SetParent(trans);
+        }
+        else if (matchCount >= 9)
+        {
+            GameObject popBig = Instantiate(movePopPrefab);
+            popBig.name = "Big";
+            popBig.transform.SetParent(trans);
         }
     }
 
@@ -387,26 +428,24 @@ public class Match3 : MonoBehaviour
                 Point p = new Point(x, y);
                 Node node = getNodeAtPoint(p);
                 int val = getValueAtPoint(p);
-                if (val != 0) continue; // If not a hole, do nothing
+                if (val != 0) continue;
                 for (int ny = (y-1); ny >= -1; ny--)
                 {
                     Point next = new Point(x, ny);
                     int nextVal = getValueAtPoint(next);
                     if (nextVal == 0)
                         continue;
-                    if (nextVal != -1) // If not hit end but not 0, fill hole
+                    if (nextVal != -1)
                     {
                         Node got = getNodeAtPoint(next);
                         NodePiece piece = got.GetPiece();
 
-                        // Set hole
                         node.SetPiece(piece);
                         update.Add(piece);
 
-                        // Replace hole
                         got.SetPiece(null);
                     }
-                    else // Use dead pieces or create new ones to fill holes
+                    else
                     {
                         int newVal = fillPiece();
                         NodePiece piece;
@@ -475,8 +514,7 @@ public class Match3 : MonoBehaviour
         if (set != null && val >= 0 && val < pieces.Length)
             set.Intialize(pieces[val], getPositionFromPoint(p));
     }
-    
-    // Method to replace the entire sprite array
+
     public void SetSprites(Sprite[] newSprites)
     {
         pieces = newSprites;
@@ -492,7 +530,6 @@ public class Match3 : MonoBehaviour
 
     }
 
-    // Method to get or generate the seed hash code
     private int GetOrCreateSeedHashCode()
     {
         if (string.IsNullOrEmpty(seedString))
@@ -510,7 +547,6 @@ public class Match3 : MonoBehaviour
             }
         else
             {
-                // If parsing fails, generate a new seed and update
                 string seed = getRandomSeed();
                 int seedHashCode = seed.GetHashCode();
                 seedString = seedHashCode.ToString();
@@ -519,7 +555,6 @@ public class Match3 : MonoBehaviour
         }
     }
 
-    // Call this to clear previous highlights
 void ClearHighlights()
 {
     foreach (var hl in activeHighlights)
@@ -529,9 +564,6 @@ void ClearHighlights()
     activeHighlights.Clear();
 }
 
-
-
-// Main method to find and highlight possible moves
 public List<(Point p1, Point p2)> GetPossibleMoves()
 {
     List<(Point, Point)> moves = new List<(Point, Point)>();
@@ -542,11 +574,23 @@ public List<(Point p1, Point p2)> GetPossibleMoves()
             Point p = new Point(x, y);
             if (x < width - 1 && IsSwapResultingMatch(p, new Point(x + 1, y)))
             {
-                moves.Add((p, new Point(x + 1, y)));
+                NodePiece pieceA = getNodeAtPoint(p)?.GetPiece();
+                NodePiece pieceB = getNodeAtPoint(new Point(x + 1, y))?.GetPiece();
+
+                if (pieceA != null && pieceB != null && pieceA.gameObject.activeInHierarchy && pieceB.gameObject.activeInHierarchy)
+                {
+                    moves.Add((p, new Point(x + 1, y)));
+                }
             }
             if (y < height - 1 && IsSwapResultingMatch(p, new Point(x, y + 1)))
             {
-                moves.Add((p, new Point(x, y + 1)));
+                NodePiece pieceA = getNodeAtPoint(p)?.GetPiece();
+                NodePiece pieceB = getNodeAtPoint(new Point(x + 1, y))?.GetPiece();
+
+                if (pieceA != null && pieceB != null && pieceA.gameObject.activeInHierarchy && pieceB.gameObject.activeInHierarchy)
+                {
+                    moves.Add((p, new Point(x, y + 1)));
+                }
             }
         }
     }
@@ -559,23 +603,42 @@ public void SpawnHighlights(List<(Point p1, Point p2)> moves)
 
     foreach (var move in moves)
     {
-        // Highlight first node
         Vector2 pos1 = getPositionFromPoint(move.p1);
+        Vector2 pos2 = getPositionFromPoint(move.p2);
+
         GameObject hl1 = Instantiate(highlightPrefab, gameBoard);
         hl1.GetComponent<RectTransform>().anchoredPosition = pos1;
-        hl1.name = getNodeAtPoint(move.p1)?.GetPiece()?.gameObject.name ?? "Highlight_" + move.p1.x + "_" + move.p1.y;
-        activeHighlights.Add(hl1);
-
-        // Highlight second node
-        Vector2 pos2 = getPositionFromPoint(move.p2);
         GameObject hl2 = Instantiate(highlightPrefab, gameBoard);
         hl2.GetComponent<RectTransform>().anchoredPosition = pos2;
+
+        Vector2 direction1 = pos2 - pos1;
+        float angle1 = Mathf.Atan2(direction1.y, direction1.x) * Mathf.Rad2Deg;
+        hl1.GetComponent<RectTransform>().rotation = Quaternion.Euler(0, 0, angle1);
+        Vector2 direction2 = pos1 - pos2;
+        float angle2 = Mathf.Atan2(direction2.y, direction2.x) * Mathf.Rad2Deg;
+        hl2.GetComponent<RectTransform>().rotation = Quaternion.Euler(0, 0, angle2);
+        
+        if (highlightColors.Count > 0)
+            {
+                Color randomColor = highlightColors[Random.Range(0, highlightColors.Count)];
+                randomColor.a = 1f;
+                var image1 = hl1.GetComponent<UnityEngine.UI.Image>();
+                var image2 = hl2.GetComponent<UnityEngine.UI.Image>();
+                if (image1 != null && image2 != null)
+                {
+                    image1.color = randomColor;
+                    image2.color = randomColor;
+                }
+            }        
+
+        hl1.name = getNodeAtPoint(move.p1)?.GetPiece()?.gameObject.name ?? "Highlight_" + move.p1.x + "_" + move.p1.y;
+        activeHighlights.Add(hl1);
+        
         hl2.name = getNodeAtPoint(move.p2)?.GetPiece()?.gameObject.name ?? "Highlight_" + move.p2.x + "_" + move.p2.y;
         activeHighlights.Add(hl2);
     }
 }
 
-// Helper method to check if swapping two points results in a match
 public bool IsSwapResultingMatch(Point p1, Point p2)
 {
     int val1 = getValueAtPoint(p1);
@@ -586,20 +649,17 @@ public bool IsSwapResultingMatch(Point p1, Point p2)
 
     bool result = IsPartOfMatch(p1) || IsPartOfMatch(p2);
 
-    // Swap back
     setValueAtPoint(p1, val1);
     setValueAtPoint(p2, val2);
 
     return result;
 }
 
-// Checks if a point is part of a match
 public bool IsPartOfMatch(Point p)
 {
     int val = getValueAtPoint(p);
     if (val <= 0) return false;
 
-    // Horizontal check
     int countLeft = 0;
     int countRight = 0;
     for (int x = p.x - 1; x >= 0; x--)
@@ -610,7 +670,6 @@ public bool IsPartOfMatch(Point p)
         else break;
     if (countLeft + countRight + 1 >= 3) return true;
 
-    // Vertical check
     int countUp = 0;
     int countDown = 0;
     for (int y = p.y - 1; y >= 0; y--)
@@ -653,7 +712,7 @@ public void PossibleMoveCount()
 [System.Serializable]
 public class Node
 {
-    public int value; //0 = blank, 1 = cube, 2 = sphere, 3 = cylinder, 4 = pyramid, 5 = diamond, -1 = hole
+    public int value; //0 = blank, -1 = hole
     public Point index;
     NodePiece piece;
 
