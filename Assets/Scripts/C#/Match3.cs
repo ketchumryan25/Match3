@@ -17,7 +17,10 @@ public class Match3 : MonoBehaviour
     [SerializeField]public GameObject nodePiece;
     [SerializeField]public GameObject killedPiece;
     [SerializeField] private GameObject highlightPrefab;
-    [SerializeField] private GameObject movePopPrefab;
+    [SerializeField] private GameObject movePopBase;
+    [SerializeField] private GameObject movePopSmall;
+    [SerializeField] private GameObject movePopMedium;
+    [SerializeField] private GameObject movePopBig;
     [SerializeField] private GameObject audioHolder;
 
     [Header("Hint Stuff")]
@@ -336,7 +339,7 @@ public class Match3 : MonoBehaviour
                 {
                     int matchCount = connected.Count;
                     Debug.LogWarning("There was a match of " + matchCount);
-                    MatchPop(matchCount);
+                    SelectMatchPop(matchCount);
                     ClearHighlights();
                     AddScore(matchCount);
                     foreach (Point pnt in connected)
@@ -361,33 +364,37 @@ public class Match3 : MonoBehaviour
         }
     }
 
-    public void MatchPop(int matchCount)
+    public void SelectMatchPop(int matchCount)
     {
-        Transform trans = audioHolder.transform;
         if (matchCount == 3)
         {
-            GameObject popBase = Instantiate(movePopPrefab);
-            popBase.name = "Base";
-            popBase.transform.SetParent(trans);
+            GameObject pop = Instantiate(movePopBase);
+            PlayPop(pop);
         }
         else if (matchCount > 3 && matchCount < 6)
         {
-            GameObject popSmall = Instantiate(movePopPrefab);
-            popSmall.name = "Small";
-            popSmall.transform.SetParent(trans);
+            GameObject pop = Instantiate(movePopSmall);
+            PlayPop(pop);
         }
         else if (matchCount >= 6 && matchCount < 9)
         {
-            GameObject popMedium = Instantiate(movePopPrefab);
-            popMedium.name = "Medium";
-            popMedium.transform.SetParent(trans);
+            GameObject pop = Instantiate(movePopMedium);
+            PlayPop(pop);
         }
         else if (matchCount >= 9)
         {
-            GameObject popBig = Instantiate(movePopPrefab);
-            popBig.name = "Big";
-            popBig.transform.SetParent(trans);
+            GameObject pop = Instantiate(movePopBig);
+            PlayPop(pop);
         }
+    }
+
+    public void PlayPop(GameObject pop)
+    {
+        Transform trans = audioHolder.transform;
+        AudioSource audio = pop.GetComponent<AudioSource>();
+        pop.transform.SetParent(trans);
+        audio.Play();
+        Destroy(pop, audio.clip.length + 0.1f);
     }
 
     public void AddScore(int matchCount)
@@ -572,6 +579,7 @@ public List<(Point p1, Point p2)> GetPossibleMoves()
         for (int y = 0; y < height; y++)
         {
             Point p = new Point(x, y);
+            // Check Right
             if (x < width - 1 && IsSwapResultingMatch(p, new Point(x + 1, y)))
             {
                 NodePiece pieceA = getNodeAtPoint(p)?.GetPiece();
@@ -582,10 +590,11 @@ public List<(Point p1, Point p2)> GetPossibleMoves()
                     moves.Add((p, new Point(x + 1, y)));
                 }
             }
+            // Check Down
             if (y < height - 1 && IsSwapResultingMatch(p, new Point(x, y + 1)))
             {
                 NodePiece pieceA = getNodeAtPoint(p)?.GetPiece();
-                NodePiece pieceB = getNodeAtPoint(new Point(x + 1, y))?.GetPiece();
+                NodePiece pieceB = getNodeAtPoint(new Point(x, y + 1))?.GetPiece();
 
                 if (pieceA != null && pieceB != null && pieceA.gameObject.activeInHierarchy && pieceB.gameObject.activeInHierarchy)
                 {
@@ -644,15 +653,50 @@ public bool IsSwapResultingMatch(Point p1, Point p2)
     int val1 = getValueAtPoint(p1);
     int val2 = getValueAtPoint(p2);
 
+    if (val1 <= 0 || val2 <= 0) return false;
+
     setValueAtPoint(p1, val2);
     setValueAtPoint(p2, val1);
 
-    bool result = IsPartOfMatch(p1) || IsPartOfMatch(p2);
+    bool matchResult = IsPartOfMatch(p1) || IsPartOfMatch(p2);
+
+    bool squareResult = HasSquareMatch(p1) || HasSquareMatch(p2);
 
     setValueAtPoint(p1, val1);
     setValueAtPoint(p2, val2);
 
-    return result;
+    return matchResult || squareResult;
+}
+
+private bool HasSquareMatch(Point p)
+{
+    int val = getValueAtPoint(p);
+    if (val <= 0) return false;
+
+    // Check all 4 possible squares around p
+    List<Point> origins = new List<Point>
+    {
+        new Point(p.x - 1, p.y - 1),
+        new Point(p.x, p.y - 1),
+        new Point(p.x - 1, p.y),
+        new Point(p.x, p.y)
+    };
+
+    foreach (var origin in origins)
+    {
+        // Check bounds
+        if (origin.x >= 0 && origin.y >= 0 && origin.x < width - 1 && origin.y < height - 1)
+        {
+            if (getValueAtPoint(origin) == val &&
+                getValueAtPoint(new Point(origin.x + 1, origin.y)) == val &&
+                getValueAtPoint(new Point(origin.x, origin.y + 1)) == val &&
+                getValueAtPoint(new Point(origin.x + 1, origin.y + 1)) == val)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 public bool IsPartOfMatch(Point p)

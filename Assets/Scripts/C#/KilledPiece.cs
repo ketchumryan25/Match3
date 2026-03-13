@@ -7,6 +7,7 @@ public class KilledPiece : MonoBehaviour
 {    
     [Header("Piece Sizes")]
     [SerializeField]public float pieceDouble;
+    [SerializeField]public float pieceMultiplier;
     public bool falling;   
 
     [Header("Piece Options")]
@@ -38,7 +39,7 @@ public class KilledPiece : MonoBehaviour
         moveDir.y -= Time.deltaTime * gravity;
         moveDir.x = Mathf.Lerp(moveDir.x, 0, Time.deltaTime);
         rect.anchoredPosition += moveDir * Time.deltaTime * speed;
-        if (rect.position.x < -pieceDouble || rect.position.x > Screen.width + pieceDouble || rect.position.y < -pieceDouble || rect.position.y > Screen.height + pieceDouble)
+        if (rect.position.x < (-pieceDouble * pieceMultiplier) || rect.position.x > Screen.width + (pieceDouble * pieceMultiplier) || rect.position.y < (-pieceDouble * pieceMultiplier) || rect.position.y > Screen.height + (pieceDouble * pieceMultiplier))
             falling = false;
     }
 }

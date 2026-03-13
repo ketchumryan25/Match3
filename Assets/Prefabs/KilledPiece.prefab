@@ -89,6 +89,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pieceDouble: 68
+  pieceMultiplier: 1.2
   falling: 0
   speed: 16
   gravity: 32
