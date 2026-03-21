@@ -44,4 +44,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level_GRID_MED.unity
     guid: 3d23c6b328779f048a0fafe5c85e7b6a
+  - enabled: 1
+    path: Assets/Scenes/Level_BAR_EASY.unity
+    guid: 0600386e8ba03144fbf14b40cc502708
+  - enabled: 1
+    path: Assets/Scenes/Level_BAR_HARD.unity
+    guid: d97f809bec70ca1459e2c5d17feeb2a7
+  - enabled: 1
+    path: Assets/Scenes/Level_BAR_MED.unity
+    guid: a346d310685450a40a9becaa510e14fb
   m_configObjects: {}
