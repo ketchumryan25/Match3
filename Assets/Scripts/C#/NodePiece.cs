@@ -6,13 +6,17 @@ using UnityEngine.EventSystems;
 
 public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    public int value; //0 = blank, 1 = cube, 2 = sphere, 3 = cylinder, 4 = pyramid, 5 = diamond, -1 = hole
+    public int value; //0 = blank, 1 = apple, 2 = banana, 3 = blueberry, 4 = grape, 5 = orange, 6 = pear, 7 = strawberry, -1 = hole
     public Point index;
 
     [HideInInspector]
     public Vector2 pos;
     [HideInInspector]
-    public RectTransform rect;  
+    public RectTransform rect;
+    [HideInInspector]
+    public GameObject match3;
+    [HideInInspector]
+    public Match3 m3Script;    
 
     [Header("Piece Sizes")]
     [SerializeField]public int pieceBase;
@@ -24,6 +28,11 @@ public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     public void Intialize(int v, Point p, Sprite piece)
     {
+        match3 = GameObject.Find("_Match3");
+        if (match3 != null)
+        {
+            m3Script = match3.GetComponent<Match3>();
+        }
         img = GetComponent<Image>();
         rect = GetComponent<RectTransform>();
 
@@ -79,10 +88,18 @@ public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         if (updating) return;
         MovePieces.instance.MovePiece(this);
         Debug.Log("Grab " + transform.name);
+        if (m3Script != null)
+        {
+            m3Script.currentPiece = transform.gameObject;
+        }
     }
     public void OnPointerUp(PointerEventData eventData)
     {
         MovePieces.instance.DropPiece();
         Debug.Log("Let go of " + transform.name);
+        if (m3Script != null)
+        {
+            m3Script.currentPiece = null;
+        }
     }
 }

@@ -22,6 +22,7 @@ public class Match3 : MonoBehaviour
     [SerializeField] private GameObject movePopMedium;
     [SerializeField] private GameObject movePopBig;
     [SerializeField] private GameObject audioHolder;
+    [SerializeField] public GameObject currentPiece;
 
     [Header("Hint Stuff")]
     [SerializeField] public List<Color> highlightColors = new List<Color>();
@@ -76,6 +77,7 @@ public class Match3 : MonoBehaviour
         flipped = new List<FlippedPieces>();
         dead = new List<NodePiece>();
         killed = new List<KilledPiece>();
+        currentPiece = null;
 
         IntializeBoard();
         VerifyBoard();
@@ -278,15 +280,21 @@ public class Match3 : MonoBehaviour
         return val;
     }
 
-    int getValueAtPoint(Point p)
+    public int getValueAtPoint(Point p)
     {
         if(p.x < 0 || p.x >= width || p.y < 0 || p.y >= height) return -1;
         return board[p.x, p.y].value;
     }
 
-    void setValueAtPoint(Point p, int v)
+    public void setValueAtPoint(Point p, int v)
     {
         board[p.x, p.y].value = v;
+    }
+
+    public Point IntToPoint(int pntX, int pntY)
+    {
+        Point pnt = new Point(pntX, pntY);
+        return pnt;
     }
 
     int newValue(ref List<int> remove)
@@ -362,6 +370,22 @@ public class Match3 : MonoBehaviour
                 update.Remove(piece);
             }
         }
+    }
+
+    public void RemovePiece(int pntX, int pntY)
+    {
+        Point pnt = new Point(pntX, pntY);
+        Node node = getNodeAtPoint(pnt);
+        NodePiece nodePiece = node.GetPiece();
+        update.Remove(nodePiece);
+    }
+
+    public void AddPiece(int pntX, int pntY)
+    {
+        Point pnt = new Point(pntX, pntY);
+        Node node = getNodeAtPoint(pnt);
+        NodePiece nodePiece = node.GetPiece();
+        update.Add(nodePiece);
     }
 
     public void SelectMatchPop(int matchCount)
