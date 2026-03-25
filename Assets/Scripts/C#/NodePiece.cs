@@ -39,6 +39,10 @@ public class NodePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         value = v;
         SetIndex(p);
         img.sprite = piece;
+        if (img.sprite != null)
+        {
+            img.preserveAspect = true;
+        }
     }
 
     public void SetIndex(Point p)

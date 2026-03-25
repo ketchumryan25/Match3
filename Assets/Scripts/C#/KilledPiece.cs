@@ -29,6 +29,10 @@ public class KilledPiece : MonoBehaviour
         img = GetComponent<Image>();
         rect = GetComponent<RectTransform>();
         img.sprite = piece;
+        if (img.sprite != null)
+        {
+            img.preserveAspect = true;
+        }
         rect.anchoredPosition = start;
     }
 
