@@ -1,22 +1,43 @@
 Shader "UI/RotatableGradientWithAlpha"
 {
     Properties
-    {
+    {		
+		_StencilComp ("Stencil Comparison", Float) = 8
+		_Stencil ("Stencil ID", Float) = 0
+		_StencilOp ("Stencil Operation", Float) = 0
+		_StencilWriteMask ("Stencil Write Mask", Float) = 255
+		_StencilReadMask ("Stencil Read Mask", Float) = 255
+		
+		_CullMode ("Cull Mode", Float) = 0
+		_ColorMask ("Color Mask", Float) = 15
+		_ClipRect ("Clip Rect", vector) = (-32767, -32767, 32767, 32767)
         _MainTex ("Texture", 2D) = "white" {}
+
         _Color1 ("Color 1", Color) = (1,1,1,1)
         _Color2 ("Color 2", Color) = (0,0,0,1)
         _Rotation ("Rotation (Degrees)", Float) = 0
         _AlphaThreshold ("Alpha Threshold", Range(0,1)) = 0.1
+        [Toggle(UNITY_UI_ALPHACLIP)]  _UseUIAlphaClip ("Use Alpha Clip", Float) = 0.000000
     }
     SubShader
     {
         Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
         LOD 100
-
+		
+		Stencil
+		{
+			Ref [_Stencil]
+			Comp [_StencilComp]
+			Pass [_StencilOp] 
+			ReadMask [_StencilReadMask]
+			WriteMask [_StencilWriteMask]
+		}
         Pass
         {
             Blend SrcAlpha OneMinusSrcAlpha
-            Cull Off
+		    Lighting Off
+		    Cull [_CullMode]
+		    ColorMask [_ColorMask]
             ZWrite Off
 
             CGPROGRAM
@@ -56,6 +77,14 @@ Shader "UI/RotatableGradientWithAlpha"
             {
                 // Sample the texture's color and alpha
                 fixed4 texColor = tex2D(_MainTex, i.uv);
+
+                // Use alpha clipping if enabled
+                #ifdef _ALPHATEST_ON
+                    if (_UseUIAlphaClip > 0.5)
+                    {
+                        clip(texColor.a - _AlphaThreshold);
+                    }
+                #endif
 
                 // Only color the non-transparent parts
                 if (texColor.a <= _AlphaThreshold)
