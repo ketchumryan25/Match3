@@ -60,7 +60,7 @@ public class Match3 : MonoBehaviour
 
     private List<(Point p1, Point p2)> currentPossibleMoves = new List<(Point, Point)>();
     public int currentMoveCount = 0;
-    private bool GameStarted = false;
+    public bool GameStarted = false;
 
     System.Random random;
 
@@ -79,14 +79,14 @@ public class Match3 : MonoBehaviour
         killed = new List<KilledPiece>();
         currentPiece = null;
 
-        IntializeBoard();
-        VerifyBoard();
-        InstantiateBaord();
+        //IntializeBoard();
+        //VerifyBoard();
+        //InstantiateBaord();
 
-        GameStarted = true;
+        //GameStarted = true;
     }
 
-    void IntializeBoard()
+    public void IntializeBoard()
     {
         board = new Node[width, height];
 
@@ -99,7 +99,7 @@ public class Match3 : MonoBehaviour
         }
     }
 
-    void VerifyBoard()
+    public void VerifyBoard()
     {
         List<int> remove;
         for(int x = 0; x < width; x++)
@@ -122,7 +122,7 @@ public class Match3 : MonoBehaviour
         }
     }
 
-    void InstantiateBaord()
+    public void InstantiateBaord()
     {
         for(int x = 0; x < width; x++)
         {
@@ -341,7 +341,7 @@ public class Match3 : MonoBehaviour
                 {
                     if (wasFlipped)
                         FlipPieces(piece.index, flippedPiece.index, false);
-                        Debug.LogWarning("There was no match");
+                        //Debug.LogWarning("There was no match");
                 }
                 else
                 {
