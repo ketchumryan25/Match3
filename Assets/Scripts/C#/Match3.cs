@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Match3 : MonoBehaviour
 {
@@ -17,12 +18,15 @@ public class Match3 : MonoBehaviour
     [SerializeField]public GameObject nodePiece;
     [SerializeField]public GameObject killedPiece;
     [SerializeField] private GameObject highlightPrefab;
+    [SerializeField] private GameObject ScorePopUpPrefab;
     [SerializeField] private GameObject movePopBase;
     [SerializeField] private GameObject movePopSmall;
     [SerializeField] private GameObject movePopMedium;
     [SerializeField] private GameObject movePopBig;
     [SerializeField] private GameObject audioHolder;
+    [SerializeField] private GameObject scoreHolder;
     [SerializeField] public GameObject currentPiece;
+    [SerializeField] public GameObject currentScorePop;
 
     [Header("Hint Stuff")]
     [SerializeField] public List<Color> highlightColors = new List<Color>();
@@ -57,6 +61,7 @@ public class Match3 : MonoBehaviour
     List<FlippedPieces> flipped;
     List<NodePiece> dead;
     List<KilledPiece> killed;
+    List<Point> connectedPoints;
 
     private List<(Point p1, Point p2)> currentPossibleMoves = new List<(Point, Point)>();
     public int currentMoveCount = 0;
@@ -362,7 +367,6 @@ public class Match3 : MonoBehaviour
                         }
                         node.SetPiece(null);
                     }
-
                     ApplyGravityToBoard();
                 }
 
@@ -421,33 +425,53 @@ public class Match3 : MonoBehaviour
         Destroy(pop, audio.clip.length + 0.1f);
     }
 
+    public void PlayScorePopUp(GameObject scorePop, int score)
+    {
+        if (currentScorePop != null)
+        {
+            Destroy(currentScorePop, 0);
+        }
+        GameObject pop = Instantiate(scorePop);
+
+        Transform trans = scoreHolder.transform;
+        pop.transform.SetParent(trans, false);
+
+        RectTransform rectTransform = scorePop.GetComponent<RectTransform>();
+        rectTransform.localPosition = Vector3.zero;
+        rectTransform.localScale = Vector3.one;
+        
+        string scoreString = $"{score}";
+        TextMeshProUGUI text = pop.GetComponent<TextMeshProUGUI>();
+        text.text = scoreString;
+
+        float duration = 1f;
+        currentScorePop = pop;
+        Destroy(pop, duration);
+        
+    }
+
     public void AddScore(int matchCount)
     {
         int scoreStart = matchCount * scoreBase;
+        int scoreTemp = 0;
         if (matchCount == 3)
         {
-            float scoreTemp = scoreCurrent + scoreStart;
-            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
-            scoreCurrent = scoreRounded;
+            scoreTemp = Mathf.RoundToInt(scoreStart);
         }
         else if (matchCount > 3 && matchCount < 6)
         {
-            float scoreTemp = scoreCurrent + (scoreStart * scoreMultiSmall);
-            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
-            scoreCurrent = scoreRounded;
+            scoreTemp = Mathf.RoundToInt(scoreStart * scoreMultiSmall);
         }
         else if (matchCount >= 6 && matchCount < 9)
         {
-            float scoreTemp = scoreCurrent + (scoreStart * scoreMultiMedium);
-            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
-            scoreCurrent = scoreRounded;
+            scoreTemp = Mathf.RoundToInt(scoreStart * scoreMultiMedium);
         }
         else if (matchCount >= 9)
         {
-            float scoreTemp = scoreCurrent + (scoreStart * scoreMultiBig);
-            int scoreRounded = Mathf.RoundToInt(scoreTemp); 
-            scoreCurrent = scoreRounded;
+            scoreTemp = Mathf.RoundToInt(scoreStart * scoreMultiBig);
         }
+        PlayScorePopUp(ScorePopUpPrefab, scoreTemp);
+        scoreCurrent = scoreCurrent + scoreTemp;
     }
 
     void ApplyGravityToBoard()
