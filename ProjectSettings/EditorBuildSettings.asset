@@ -53,4 +53,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level_BAR_MED.unity
     guid: a346d310685450a40a9becaa510e14fb
+  - enabled: 1
+    path: Assets/Scenes/Level_SPIKE_EASY.unity
+    guid: 0468af2779888444dac1f2cc89d29174
+  - enabled: 1
+    path: Assets/Scenes/Level_SPIKE_HARD.unity
+    guid: 1f770a335d5cc534981987fd1e394229
+  - enabled: 1
+    path: Assets/Scenes/Level_SPIKE_MED.unity
+    guid: 8812ac90481f2ea419c06b2cb11e14fb
   m_configObjects: {}

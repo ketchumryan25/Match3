@@ -66,11 +66,16 @@ public class Match3 : MonoBehaviour
     private List<(Point p1, Point p2)> currentPossibleMoves = new List<(Point, Point)>();
     public int currentMoveCount = 0;
     public bool GameStarted = false;
+    public bool IsTesting = false;
 
     System.Random random;
 
     void Start()
     {
+        if (IsTesting)
+        {
+            StartGame();
+        }
     }
 
     public void StartGame()
@@ -83,6 +88,18 @@ public class Match3 : MonoBehaviour
         dead = new List<NodePiece>();
         killed = new List<KilledPiece>();
         currentPiece = null;
+
+        if (IsTesting)
+        {
+            if (string.IsNullOrEmpty(seedString))
+            {
+                GetOrCreateSeedHashCode();
+            }
+            IntializeBoard();
+            VerifyBoard();
+            InstantiateBaord();
+            GameStarted = true;
+        }
 
         //IntializeBoard();
         //VerifyBoard();
